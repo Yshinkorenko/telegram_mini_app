@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Кликер — Монетки</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.10);
+      --text:#e5e7eb;
+      --muted:#93a4b8;
+      --acc:#22c55e;
+      --acc2:#60a5fa;
+      --warn:#fb923c;
+      --shadow:0 20px 60px rgba(0,0,0,.45);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 700px at 15% 10%, rgba(96,165,250,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 25%, rgba(34,197,94,.30), transparent 55%),
+        radial-gradient(700px 600px at 50% 95%, rgba(251,146,60,.25), transparent 55%),
+        var(--bg);
+      padding:18px;
+    }
+    .app{
+      width:min(520px, 96vw);
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow:var(--shadow);
+      border-radius:24px;
+      padding:16px;
+      backdrop-filter: blur(10px);
+    }
+    header{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+      margin-bottom:14px;
+    }
+    .title{font-weight:800; letter-spacing:.2px; font-size:18px}
+    .sub{color:var(--muted); font-size:12px; margin-top:4px}
+    .user{
+      text-align:right;
+      max-width:45%;
+    }
+    .chip{
+      display:inline-flex; gap:8px; align-items:center;
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--border);
+      padding:8px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:12px;
+    }
+    @media (max-width:520px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      padding:14px;
+    }
+    .big{
+      display:flex; flex-direction:column; gap:12px;
+      align-items:center; justify-content:center;
+      min-height:240px;
+    }
+    .score{
+      font-weight:900;
+      font-size:44px;
+      letter-spacing:.2px;
+      line-height:1;
+    }
+    .label{color:var(--muted); font-size:13px}
+    .btn{
+      width:100%;
+      border:0;
+      border-radius:16px;
+      padding:14px 14px;
+      cursor:pointer;
+      font-weight:800;
+      color:#071018;
+      background:linear-gradient(135deg, rgba(34,197,94,1), rgba(96,165,250,1));
+      transition: transform .08s ease, filter .15s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn:hover{ filter: brightness(1.05); }
+
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .smallBtn{
+      flex:1;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .smallBtn:hover{ background:rgba(255,255,255,.09); }
+
+    .shopItem{
+      display:flex; justify-content:space-between; gap:12px; align-items:center;
+      padding:10px 0;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+    .shopItem:first-child{ border-top:0; padding-top:0; }
+    .name{font-weight:800}
+    .meta{color:var(--muted); font-size:12px; margin-top:2px}
+    .buy{
+      border:0;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:800;
+      cursor:pointer;
+      background:rgba(34,197,94,.22);
+      border:1px solid rgba(34,197,94,.35);
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .buy:hover{ background:rgba(34,197,94,.30); }
+    .buy:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+    .toast{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="title">Кликер «Монетки»</div>
+        <div class="sub">Жми кнопку → покупай улучшения → отправляй результат боту</div>
+      </div>
+      <div class="user">
+        <div class="chip" id="userChip">Открыто не в Telegram</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card big">
+        <div class="label">Твои монетки</div>
+        <div class="score" id="score">0</div>
+        <div class="label">+<span id="perClick">1</span> за клик • +<span id="perSec">0</span>/сек</div>
+        <button class="btn" id="clickBtn">💰 Собрать монетки</button>
+        <div class="row">
+          <button class="smallBtn" id="resetBtn">Сброс</button>
+          <button class="smallBtn" id="sendBtn">Отправить боту</button>
+        </div>
+        <div class="toast" id="toast"></div>
+      </section>
+
+      <section class="card">
+        <div class="title" style="font-size:16px">Магазин</div>
+
+        <div class="shopItem">
+          <div>
+            <div class="name">Перчатки</div>
+            <div class="meta">+1 к клику • цена: <b id="priceClick">10</b></div>
+          </div>
+          <button class="buy" id="buyClick">Купить</button>
+        </div>
+
+        <div class="shopItem">
+          <div>
+            <div class="name">Автокликер</div>
+            <div class="meta">+1/сек • цена: <b id="priceAuto">25</b></div>
+          </div>
+          <button class="buy" id="buyAuto">Купить</button>
+        </div>
+
+        <div class="shopItem">
+          <div>
+            <div class="name">Удвоитель</div>
+            <div class="meta">×2 к клику • цена: <b id="priceMult">60</b></div>
+          </div>
+          <button class="buy" id="buyMult">Купить</button>
+        </div>
+
+        <div class="toast">
+          Сохранение: автоматически в браузере (localStorage).
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    const ui = {
+      userChip: document.getElementById("userChip"),
+      score: document.getElementById("score"),
+      perClick: document.getElementById("perClick"),
+      perSec: document.getElementById("perSec"),
+      toast: document.getElementById("toast"),
+      clickBtn: document.getElementById("clickBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      sendBtn: document.getElementById("sendBtn"),
+      buyClick: document.getElementById("buyClick"),
+      buyAuto: document.getElementById("buyAuto"),
+      buyMult: document.getElementById("buyMult"),
+      priceClick: document.getElementById("priceClick"),
+      priceAuto: document.getElementById("priceAuto"),
+      priceMult: document.getElementById("priceMult")
+    };
+
+    const tg = window.Telegram?.WebApp;
+
+    const storeKey = "tma_clicker_state_v1";
+
+    const state = {
+      coins: 0,
+      perClick: 1,
+      perSec: 0,
+      prices: { click: 10, auto: 25, mult: 60 }
+    };
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(storeKey);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return;
+        Object.assign(state, parsed);
+      } catch {}
+    }
+
+    function save() {
+      localStorage.setItem(storeKey, JSON.stringify(state));
+    }
+
+    function format(n) {
+      return Math.floor(n).toLocaleString("ru-RU");
+    }
+
+    function setToast(text) {
+      ui.toast.textContent = text || "";
+    }
+
+    function updateUI() {
+      ui.score.textContent = format(state.coins);
+      ui.perClick.textContent = format(state.perClick);
+      ui.perSec.textContent = format(state.perSec);
+
+      ui.priceClick.textContent = format(state.prices.click);
+      ui.priceAuto.textContent = format(state.prices.auto);
+      ui.priceMult.textContent = format(state.prices.mult);
+
+      ui.buyClick.disabled = state.coins < state.prices.click;
+      ui.buyAuto.disabled = state.coins < state.prices.auto;
+      ui.buyMult.disabled = state.coins < state.prices.mult;
+    }
+
+    function addCoins(amount) {
+      state.coins += amount;
+      save();
+      updateUI();
+    }
+
+    function buy(kind) {
+      const price = state.prices[kind];
+      if (state.coins < price) return;
+
+      state.coins -= price;
+
+      if (kind === "click") {
+        state.perClick += 1;
+        state.prices.click = Math.floor(state.prices.click * 1.45);
+        setToast("Куплено: +1 к клику.");
+      }
+
+      if (kind === "auto") {
+        state.perSec += 1;
+        state.prices.auto = Math.floor(state.prices.auto * 1.55);
+        setToast("Куплено: +1 монетка/сек.");
+      }
+
+      if (kind === "mult") {
+        state.perClick *= 2;
+        state.prices.mult = Math.floor(state.prices.mult * 2.1);
+        setToast("Куплено: клик ×2.");
+      }
+
+      save();
+      updateUI();
+    }
+
+    function reset() {
+      state.coins = 0;
+      state.perClick = 1;
+      state.perSec = 0;
+      state.prices = { click: 10, auto: 25, mult: 60 };
+      save();
+      updateUI();
+      setToast("Сброшено.");
+    }
+
+    function setupTelegram() {
+      if (!tg) return;
+
+      tg.ready();
+      tg.expand();
+
+      const user = tg.initDataUnsafe?.user;
+      const name = user ? [user.first_name, user.last_name].filter(Boolean).join(" ") : "Пользователь";
+      ui.userChip.textContent = user ? `${name}` : "Telegram Mini App";
+
+      const theme = tg.themeParams || {};
+      if (theme.text_color) document.documentElement.style.setProperty("--text", theme.text_color);
+    }
+
+    function sendToBot() {
+      if (!tg) {
+        setToast("Это работает внутри Telegram (sendData).");
+        return;
+      }
+
+      const payload = {
+        coins: Math.floor(state.coins),
+        perClick: state.perClick,
+        perSec: state.perSec,
+        ts: Date.now()
+      };
+
+      tg.sendData(JSON.stringify(payload));
+      setToast("Отправлено боту. Можно закрывать Mini App.");
+    }
+
+    function startAutoIncome() {
+      setInterval(() => {
+        if (state.perSec > 0) addCoins(state.perSec);
+      }, 1000);
+    }
+
+    ui.clickBtn.addEventListener("click", () => addCoins(state.perClick));
+    ui.resetBtn.addEventListener("click", reset);
+    ui.sendBtn.addEventListener("click", sendToBot);
+
+    ui.buyClick.addEventListener("click", () => buy("click"));
+    ui.buyAuto.addEventListener("click", () => buy("auto"));
+    ui.buyMult.addEventListener("click", () => buy("mult"));
+
+    load();
+    setupTelegram();
+    updateUI();
+    startAutoIncome();
+  </script>
+</body>
+</html>
